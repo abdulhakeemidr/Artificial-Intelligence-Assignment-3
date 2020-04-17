@@ -17,33 +17,19 @@ void Scene::addChild(DisplayObject * child)
 
 void Scene::removeAllChildren()
 {
-	for(auto child : m_displayList)
-	{
-		child = nullptr;
+	if (!m_displayList.empty()) {
+		for (int i = 0; i < (int)m_displayList.size(); i++)
+		{
+			m_displayList[i] = nullptr;
+		}
+		m_displayList.clear();
+		m_displayList.resize(0);
+		m_displayList.shrink_to_fit();
 	}
-	m_displayList.clear();
-	m_displayList.resize(0);
-	m_displayList.shrink_to_fit();
 }
 
 
 int Scene::numberOfChildren() const
 {
 	return m_displayList.size();
-}
-
-void Scene::updateDisplayList()
-{
-	for (auto displayObject : m_displayList)
-	{
-		displayObject->update();
-	}
-}
-
-void Scene::drawDisplayList()
-{
-	for (auto displayObject : m_displayList)
-	{
-		displayObject->draw();
-	}
 }

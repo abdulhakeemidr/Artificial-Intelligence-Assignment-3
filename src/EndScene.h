@@ -4,6 +4,7 @@
 
 #include "Scene.h"
 #include "Label.h"
+//#include "Ship.h"
 
 class EndScene final : public Scene
 {
@@ -20,6 +21,7 @@ public:
 
 private:
 	Label* m_label{};
+	//Ship* m_pShip;
 };
 
 #endif /* defined (__END_SCENE__) */

@@ -62,13 +62,9 @@ SteeringState GameObject::getState() const
 
 void GameObject::setPosition(const glm::vec2 new_position)
 {
-	m_position = new_position;
-}
 
-void GameObject::setPosition(const float x, const float y)
-{
-	m_position.x = x;
-	m_position.y = y;
+
+	m_position = new_position;
 }
 
 void GameObject::setWidth(const int new_width)
@@ -84,12 +80,6 @@ void GameObject::setHeight(const int new_height)
 void GameObject::setVelocity(const glm::vec2 new_velocity)
 {
 	m_velocity = new_velocity;
-}
-
-void GameObject::setVelocity(const float x, const float y)
-{
-	m_velocity.x = x;
-	m_velocity.y = y;
 }
 
 void GameObject::setIsColliding(const bool collision)

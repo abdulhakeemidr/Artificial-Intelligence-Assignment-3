@@ -1,7 +1,6 @@
 #include "CollisionManager.h"
 
 
-
 int CollisionManager::squaredDistance(glm::vec2 P1, glm::vec2 P2)
 {
 	int diffOfXs = P2.x - P1.x;
@@ -24,7 +23,7 @@ bool CollisionManager::squaredRadiusCheck(GameObject * object1, GameObject * obj
 			
 			object2->setIsColliding(true);
 
-			switch (object2->getType()) {
+			/*switch (object2->getType()) {
 			case PLANET:
 				//std::cout << "Collision with Island!" << std::endl;
 				TheSoundManager::Instance()->playSound("yay", 0);
@@ -36,14 +35,12 @@ bool CollisionManager::squaredRadiusCheck(GameObject * object1, GameObject * obj
 			default:
 				//std::cout << "Collision with unknown type!" << std::endl;
 					break;
-			}
+			}*/
 
 			return true;
 		}
 		return false;
 	}
-
-	
 }
 
 bool CollisionManager::lineLineCheck(glm::vec2 line1Start, glm::vec2 line1End, glm::vec2 line2Start, glm::vec2 line2End)
@@ -96,6 +93,37 @@ bool CollisionManager::lineRectCheck(glm::vec2 line1Start, glm::vec2 line1End, g
 		return true;
 	}
 
+	return false;
+}
+
+bool CollisionManager::CircleRect(GameObject* obj1, SDL_Rect obj2)
+{
+	float testX = obj1->getPosition().x, testY = obj1->getPosition().y, distanceX, distanceY, distance;
+	if (obj1->getPosition().x < obj2.x)
+	{
+		testX = obj2.x;
+	}
+	else if (obj1->getPosition().x > obj2.x + obj2.w)
+	{
+		testX = obj2.x + obj2.w;
+	}
+	if (obj1->getPosition().y < obj2.y)
+	{
+		testY = obj2.y;
+	}
+	else if (obj1->getPosition().y > obj2.y + obj2.h)
+	{
+		testY = obj2.y + obj2.h;
+	}
+
+	distanceX = obj1->getPosition().x - testX;
+	distanceY = obj1->getPosition().y - testY;
+	distance = sqrt((distanceX * distanceX) + (distanceY * distanceY));
+
+	if (distance <= obj1->getHeight()/2)
+	{
+		return true;
+	}
 	return false;
 }
 

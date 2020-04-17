@@ -39,9 +39,6 @@ public:
 	void drawFrame(const std::string& id, int x, int y, int current_row, int current_frame, SDL_Renderer* renderer, bool centered = false, SDL_RendererFlip flip = SDL_FLIP_NONE);
 	void drawFrame(const std::string& id, int x, int y, int width, int height, int current_row, int current_frame, SDL_Renderer* renderer, double angle, int alpha, SDL_RendererFlip flip = SDL_FLIP_NONE);
 	void drawFrame(const std::string& id, int x, int y, int current_row, int current_frame, SDL_Renderer* renderer, double angle, int alpha, bool centered = false, SDL_RendererFlip flip = SDL_FLIP_NONE);
-
-	void drawFrame(const std::string& id, int x, int y, int frame_width, int frame_height, int& current_row, int& current_frame, int frame_number, int row_number, float speed_factor, SDL_Renderer* renderer, double angle, int alpha, bool centered = false, SDL_RendererFlip flip = SDL_FLIP_NONE);
-	void animate(int frame_width, int frame_height, int frame_number, int row_number, float speed_factor, int& current_frame, int& current_row);
 	
 	void drawText(const std::string& id, int x, int y, SDL_Renderer* renderer, double angle, int alpha, bool centered = false, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
@@ -60,6 +57,8 @@ public:
 	void clean();
 
 	void displayTextureMap();
+
+	void animate(std::string id, int x, int y, int w, int h, int maxFrames, int frame, double angle, SDL_Renderer* pRenderer, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 private:
 

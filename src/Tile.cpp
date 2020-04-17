@@ -22,10 +22,10 @@ Tile::Tile(glm::vec2 world_position, glm::vec2 grid_position):
 
 	SDL_Color black{ 0, 0, 0, 255 };
 	auto closedOpenLabelPosition = glm::vec2(getPosition().x, getPosition().y - 5);
-	m_pClosedOpenLabel = new Label("-", "Consolas", 12, black, closedOpenLabelPosition);
+	m_pClosedOpenLabel = new Label("-", "Consolas", 10, black, closedOpenLabelPosition);
 
 	auto valueLabelPosition = glm::vec2(getPosition().x, getPosition().y + 10);
-	m_pValueLabel = new Label(labelstring, "Consolas", 14, black, valueLabelPosition, true);
+	m_pValueLabel = new Label(labelstring, "Consolas", 12, black, valueLabelPosition, true);
 
 	m_pNeighbours = { nullptr, nullptr, nullptr, nullptr };
 	m_heuristic = MANHATTAN;

@@ -3,12 +3,13 @@
 #define __GAME_OBJECT_TYPE__
 enum GameObjectType {
 	NONE = -1,
-	SHIP,
-	TARGET,
-	PLANET,
-	MINE,
-	TILE,
 	PLAYER,
+	TARGET,
+	DESTRUCTIBLE_WALL,
+	WALL,
+	MELEE,
+	BULLET,
+	TILE,
 	NUM_OF_TYPES
 };
 #endif /* defined (__GAME_OBJECT_TYPE__) */
