@@ -20,7 +20,7 @@ int main(int argc, char * args[])
 	freopen("CON", "w", stdout);
 
 
-	TheGame::Instance()->init("Decision Making", 100, 100, 800, 600, false);
+	TheGame::Instance()->init("Pathfinding Simulation", 100, 100, 1024, 768, false);
 
 	while (TheGame::Instance()->running())
 	{

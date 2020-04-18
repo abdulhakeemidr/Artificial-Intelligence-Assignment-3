@@ -12,27 +12,27 @@
 
 // Pathfinding & Steering functions ***********************************************
 
-void PlayScene::m_buildMines()
+void PlayScene::m_buildWalls()
 {
-	for (auto index = 0; index < m_mineNum; ++index)
+	for (int index = 0; index < m_wallNum; ++index)
 	{
-		auto mine = new Mine();
-		addChild(mine);
-		m_mines.push_back(mine);
-		mine = nullptr;
+		auto wall = new DestructibleWall;
+		addChild(wall);
+		m_walls.push_back(wall);
+		wall = nullptr;
 	}
 }
 
-void PlayScene::m_eraseMines()
+void PlayScene::m_eraseWalls()
 {
-	for (auto mine : m_mines)
+	for (auto mine : m_walls)
 	{
 		delete mine;
 		mine = nullptr;
 	}
-	m_mines.clear();
-	m_mines.resize(0);
-	m_mines.shrink_to_fit();
+	m_walls.clear();
+	m_walls.resize(0);
+	m_walls.shrink_to_fit();
 }
 
 void PlayScene::m_resetImpassableTiles()
@@ -46,29 +46,36 @@ void PlayScene::m_resetImpassableTiles()
 	}
 }
 
-void PlayScene::m_spawnMines()
+void PlayScene::m_spawnWalls()
 {
 	m_resetImpassableTiles();
-	for (int i = 0; i < m_mineNum; ++i)
+	for (int i = 0; i < m_wallNum; ++i)
 	{
-		m_spawnObject(m_mines[i]);
-		m_mines[i]->getTile()->setTileState(IMPASSABLE);
+		m_spawnObject(m_walls[i]);
+		m_walls[i]->getTile()->setTileState(IMPASSABLE);
 	}
 
-	// single pass
-	m_minePassAdjustment();
-	
+	// first pass
+	m_wallPassAdjustment();
+
+	//second pass
+	m_wallPassAdjustment();
+
+	//third pass
+	m_wallPassAdjustment();
+
+	//just to be safe!
 }
 
-/*
- * This utility function checks for mines that create a dead end
- * and set the middle tile to IMPASSABLE
- */
-void PlayScene::m_minePassAdjustment()
+
+// This utility function checks for mines that create a dead end
+// and set the middle tile to IMPASSABLE
+
+void PlayScene::m_wallPassAdjustment()
 {
 	for (auto tile : m_pGrid)
 	{
-		auto mineCount = 0;
+		auto wallCount = 0;
 		auto nullCount = 0;
 		auto neighbours = tile->getNeighbours();
 		
@@ -78,7 +85,7 @@ void PlayScene::m_minePassAdjustment()
 			{
 				if (neighbours[i]->getTileState() == IMPASSABLE)
 				{
-					mineCount++;
+					wallCount++;
 				}
 			}
 			else
@@ -86,7 +93,7 @@ void PlayScene::m_minePassAdjustment()
 				nullCount++;
 			}
 
-			if (mineCount + nullCount > 2)
+			if (wallCount + nullCount > 2)
 			{
 				if((tile->getTileState() != START) && (tile->getTileState() != GOAL))
 				{
@@ -170,17 +177,30 @@ int PlayScene::m_spawnObject(PathFindingDisplayObject* object)
 	return randomTileIndex;
 }
 
-void PlayScene::m_spawnShip()
+void PlayScene::m_spawnEnemy()
 {
-	m_spawnObject(m_pShip);
-	m_pShip->getTile()->setTileState(START);
+	m_vEnemies.push_back(new Enemy());
+	m_enemyBackIndex++;
+	addChild(m_vEnemies[m_enemyBackIndex]);
+	m_spawnObject(m_vEnemies[m_enemyBackIndex]);
+	m_vEnemies[m_enemyBackIndex]->getTile()->setTileState(START);
 }
 
-void PlayScene::m_spawnPlanet()
+void PlayScene::m_spawnPlayer()
 {
-	m_spawnObject(m_pPlanet);
+	m_spawnObject(m_pPlayer);
 	m_computeTileValues();
-	m_pPlanet->getTile()->setTileState(GOAL);
+	m_pPlayer->getTile()->setTileState(GOAL);
+}
+
+void PlayScene::m_spawnMeleeAttack(bool friendly, glm::vec2 position)
+{
+	m_vHazards.push_back(new Hazard(friendly, position));
+}
+
+void PlayScene::m_spawnBullet(bool friendly, glm::vec2 position, glm::vec2 velocity)
+{
+	m_vHazards.push_back(new Bullet(friendly, position, m_pPlayer->getRotation()));
 }
 
 void PlayScene::m_computeTileValues()
@@ -188,8 +208,32 @@ void PlayScene::m_computeTileValues()
 	for (auto tile : m_pGrid)
 	{
 		tile->setHeuristic(m_heuristic);
-		tile->setTargetDistance(m_pPlanet->getTile()->getGridPosition());
+		tile->setTargetDistance(m_pPlayer->getTile()->getGridPosition());
 	}
+}
+
+void PlayScene::m_cleanInactive()
+{
+	//remove hazards
+	for (int i = 0; i < (int)m_vHazards.size(); i++) {
+		if (!m_vHazards[i]->GetActive()) {
+			delete m_vHazards[i];
+			m_vHazards[i] = nullptr;
+		}
+	}
+	m_vHazards.erase(remove(m_vHazards.begin(), m_vHazards.end(), nullptr), m_vHazards.end());
+	m_vHazards.shrink_to_fit();
+
+	//remove enemies
+	for (int i = 0; i < (int)m_vEnemies.size(); i++) {
+		if (!m_vEnemies[i]->GetActive()) {
+			delete m_vEnemies[i];
+			m_vEnemies[i] = nullptr;
+		}
+	}
+	m_vEnemies.erase(remove(m_vEnemies.begin(), m_vEnemies.end(), nullptr), m_vEnemies.end());
+	m_vEnemies.shrink_to_fit();
+
 }
 
 Tile* PlayScene::m_findLowestCostTile(Tile* current_tile)
@@ -274,7 +318,7 @@ Tile* PlayScene::m_findLowestCostTile(Tile* current_tile)
 
 void PlayScene::m_findShortestPath(Tile* start_tile)
 {
-	auto pathLength = 0;
+	pathLength = 0;
 
 	while(start_tile->getTileState() != GOAL)
 	{
@@ -282,9 +326,9 @@ void PlayScene::m_findShortestPath(Tile* start_tile)
 		if(start_tile->getTileState() == NO_PATH)
 		{
 			std::cout << "Dead end - find another path" << std::endl;
-			//m_resetGrid();
-			//m_findShortestPath(start_tile);
-			std::cout << "No Path found" << std::endl;
+			m_resetGrid();
+			m_findShortestPath(start_tile);
+			//std::cout << "No Path found" << std::endl;
 			break;
 		}
 		
@@ -298,17 +342,17 @@ void PlayScene::m_findShortestPath(Tile* start_tile)
 	std::cout << "Path Length: " << pathLength << std::endl;
 }
 
-void PlayScene::m_selectHeuristic(Heuristic heuristic)
+void PlayScene::m_selectHeuristic(Heuristic heuristic, int enemyIndex)
 {
 	// recalculate grid
 	m_heuristic = heuristic;
-	auto start = m_pShip->getTile();
-	auto goal = m_pPlanet->getTile();
+	auto start = m_vEnemies[enemyIndex]->getTile();
+	auto goal = m_pPlayer->getTile();
 	m_resetGrid();
 	m_computeTileValues();
 	start->setTileState(START);
 	goal->setTileState(GOAL);
-	m_findShortestPath(m_pShip->getTile());
+	m_findShortestPath(m_vEnemies[enemyIndex]->getTile());
 
 	// change button colour depending on heuristic chosen
 	switch(heuristic)
@@ -446,33 +490,33 @@ void PlayScene::m_updateUI()
 		ImGui::Begin("About Pathfinding Simulator", &m_displayAbout, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Separator();
 		ImGui::Text("Authors:");
-		ImGui::Text("Tom Tsiliopoulos ");
+		ImGui::Text("Placeholder Team Name (tm) (c)");
 		ImGui::End();
 	}
 
 	/*************************************************************************************************/
-	if (ImGui::Button("Respawn Ship"))
+	/*if (ImGui::Button("Respawn Enemy"))
 	{
 		m_spawnShip();
 	}
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Respawn Planet"))
+	if (ImGui::Button("Respawn Gold"))
 	{
 		m_spawnPlanet();
 	}
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Respawn Mines"))
+	if (ImGui::Button("Respawn Trees"))
 	{
 		m_spawnMines();
-	}
+	}*/
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Find Shortest Path"))
+	/*if (ImGui::Button("Find Shortest Path"))
 	{
 		m_findShortestPath(m_pShip->getTile());
 	}
@@ -494,27 +538,27 @@ void PlayScene::m_updateUI()
 			m_selectHeuristic(EUCLIDEAN);
 		}
 		ImGui::PopStyleColor();
-	}
+	}*/
 
-	if(ImGui::SliderInt("Number of Mines", &m_mineNum, 1, 298))
+	if(ImGui::SliderInt("Number of Trees", &m_wallNum, 1, 298))
 	{
-		m_eraseMines();
-		m_buildMines();
-		m_spawnMines();
+		m_eraseWalls();
+		m_buildWalls();
+		m_spawnWalls();
 	}
 
 	if(ImGui::CollapsingHeader("Visibility Options"))
 	{
-		if(ImGui::Checkbox("Ship", &m_shipVisible))
+		if(ImGui::Checkbox("Ship", &m_enemiesVisible))
 		{ }
 		ImGui::SameLine();
 
-		if (ImGui::Checkbox("Planet", &m_planetVisible))
+		if (ImGui::Checkbox("Gold", &m_playerVisible))
 		{
 		}
 		ImGui::SameLine();
 
-		if (ImGui::Checkbox("Mines", &m_minesVisible))
+		if (ImGui::Checkbox("Mines", &m_wallsVisible))
 		{
 		}
 		
@@ -531,28 +575,49 @@ void PlayScene::m_resetAll()
 	
 }
 
+int PlayScene::calculateParForCourse()
+{
+	int parForHole = pathLength - pathPar;
+	parForCourse += parForHole;
+
+	return parForCourse;
+
+	std::cout << "Congratulations, you scored a " << parForHole << "on this hole!" << std::endl;
+	std::cout << "Your total score is " << parForCourse << ". :)" << std::endl;
+}
+
 void PlayScene::start()
 {
+	TheTextureManager::Instance()->load("../Assets/textures/map.png",
+		"map", TheGame::Instance()->getRenderer());
+	TheTextureManager::Instance()->load("../Assets/textures/Player.png",
+		"player", TheGame::Instance()->getRenderer());
+	TheTextureManager::Instance()->load("../Assets/textures/Enemy.png",
+		"enemy", TheGame::Instance()->getRenderer());
+	TheTextureManager::Instance()->load("../Assets/textures/Destructible_Wall.png",
+		"d_wall", TheGame::Instance()->getRenderer());
+
 	// setup default heuristic options
 	m_heuristic = MANHATTAN;
 	m_manhattanButtonColour = ImVec4(0.26f, 1.0f, 0.98f, 0.40f);
 	m_euclideanButtonColour = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+	m_enemyBackIndex = -1;
 	
 	m_buildGrid();
 	m_mapTiles();
 
 	// instantiate planet and add it to the DisplayList
-	m_pPlanet = new Planet();
-	addChild(m_pPlanet);
-	m_spawnPlanet();
+	m_pPlayer = new Player();
+	addChild(m_pPlayer);
+	m_spawnPlayer();
 	
-	// instantiate ship and add it to the DisplayList
-	m_pShip = new Ship();
-	addChild(m_pShip);
-	m_spawnShip();
+	//m_spawnEnemy();
 
-	m_buildMines();
-	m_spawnMines();
+	m_buildWalls();
+	m_spawnWalls();
+	for (auto wall : m_walls) {
+		wall->CalculateBounds();
+	}
 }
 
 PlayScene::PlayScene()
@@ -565,6 +630,10 @@ PlayScene::~PlayScene()
 
 void PlayScene::draw()
 {
+	TheTextureManager::Instance()->draw("map", 1024 / 2, 768 / 2,
+		TheGame::Instance()->getRenderer(), 0.0f, 255, true);
+
+
 	if (m_displayUI)
 	{
 		for (auto tile : m_pGrid)
@@ -572,23 +641,29 @@ void PlayScene::draw()
 			tile->draw();
 		}
 	}
-
-	if(m_planetVisible)
-	{
-		m_pPlanet->draw();
-	}
 	
-	if(m_shipVisible)
+	if(m_enemiesVisible)
 	{
-		m_pShip->draw();
+		for (auto enemy : m_vEnemies) {
+			enemy->draw();
+		}
 	}
 
-	if(m_minesVisible)
+	if(m_wallsVisible)
 	{
-		for (auto mine : m_mines)
+		for (auto wall : m_walls)
 		{
-			mine->draw();
+			wall->draw();
 		}
+	}
+
+	if (m_playerVisible)
+	{
+		m_pPlayer->draw();
+	}
+
+	for (auto hazard : m_vHazards) {
+		hazard->draw();
 	}
 	
 
@@ -603,21 +678,110 @@ void PlayScene::draw()
 
 void PlayScene::update()
 {
-	/*m_pTile->update();
-	m_pShip->update();*/
+	const auto size = Config::TILE_SIZE;
+	const auto offset = size * 0.5f;
+	for (auto tile : m_pGrid) {
+		tile->update();
+		//enemies will need to be changed, currently just seeking player
+		for (auto enemy : m_vEnemies) {
+			if (Util::distance(enemy->getPosition(), enemy->getTile()->getPosition()) <= 1.5f) {
+				enemy->getTile()->setTileState(CLOSED);
+				setState(SEEK);
+			}
+		}
+	}
+
+	for (auto enemy : m_vEnemies) {
+		enemy->update();
+	}
+
+	for (auto hazard : m_vHazards) {
+		hazard->getUpdateInfo(m_pPlayer->getPosition(), m_mousePosition, m_pPlayer->GetMeleeRange());
+		hazard->update();
+	}
+
+	//player - wall collisions
+	m_pPlayer->setVelocity(Util::normalize(m_pPlayer->getVelocity()));
+	m_pPlayer->setRotation(Util::normalize(m_mousePosition - m_pPlayer->getPosition()));
+	m_pPlayer->update();
+	m_pPlayer->moveX(false);
+	for (int i = 0; i < (int)m_walls.size(); i++) {
+		if (m_walls[i]->GetHealth() > 0 && CollisionManager::CircleRect(m_pPlayer, m_walls[i]->GetBounds())) {
+			m_pPlayer->moveX(true);
+		}
+	}
+	m_pPlayer->moveY(false);
+	for (int i = 0; i < (int)m_walls.size(); i++) {
+		if (m_walls[i]->GetHealth() > 0 && CollisionManager::CircleRect(m_pPlayer, m_walls[i]->GetBounds())) {
+			m_pPlayer->moveY(true);
+		}
+	}
+	m_pPlayer->setVelocity(glm::vec2(0.0f, 0.0f));
+	for (auto hazard : m_vHazards) {
+		if (!(hazard->GetFriendly()) && CollisionManager::squaredRadiusCheck(m_pPlayer, hazard)) {
+			if (hazard->getType() == MELEE) {
+				m_pPlayer->SetHealth(m_pPlayer->GetHealth() - 15);
+			}
+			else m_pPlayer->SetHealth(m_pPlayer->GetHealth() - 5);
+			hazard->SetActive(false); 
+		}
+	}
+
+	for (auto hazard : m_vHazards) {
+		for (auto enemy : m_vEnemies) {
+			if (hazard->GetFriendly() && CollisionManager::squaredRadiusCheck(hazard, enemy)) {
+				if (hazard->getType() == MELEE) {
+					enemy->SetHealth(enemy->GetHealth() - 50);
+				}
+				else enemy->SetHealth(enemy->GetHealth() - 20);
+				if (enemy->GetHealth() <= 0)
+					enemy->SetActive(false);
+				hazard->SetActive(false);
+			}
+		}
+	}
+
+	for (auto hazard : m_vHazards) {
+		for (auto wall : m_walls) {
+			if (wall->GetHealth() > 0 && CollisionManager::CircleRect(hazard, wall->GetBounds())) {
+				if (hazard->getType() == MELEE) {
+					wall->SetHealth(wall->GetHealth() - 30);
+				}
+				else wall->SetHealth(wall->GetHealth() - 15);
+				if (wall->GetHealth() < 0)
+					wall->SetHealth(0);
+				hazard->SetActive(false);
+			}
+		}
+	}
+
+	if (mouseRight) {
+		if (m_pPlayer->GetMeleeTimer() == 0) {
+			m_spawnMeleeAttack(true, m_pPlayer->getPosition());
+			m_pPlayer->SetMeleeTimer(m_pPlayer->GetMeleeTimerMax());
+		}
+	}
+	if (mouseLeft) {
+		if (m_pPlayer->GetBulletTimer() == 0) {
+			m_spawnBullet(true, m_pPlayer->getPosition(), m_pPlayer->getRotation());
+			m_pPlayer->SetBulletTimer(m_pPlayer->GetBulletTimerMax());
+		}
+	}
 
 	if (m_displayUI)
 	{
 		m_updateUI();
 	}
 
+	m_cleanInactive();
+	if (m_pPlayer->GetHealth() <= 0)
+		TheGame::Instance()->changeSceneState(SceneState::END_SCENE);
 }
 
 void PlayScene::clean()
 {
 	std::cout << "PlayScene Clean Called" << std::endl;
-	delete m_pShip;
-	delete m_pPlanet;
+	delete m_pPlayer;
 
 	for (auto tile : m_pGrid)
 	{
@@ -628,14 +792,32 @@ void PlayScene::clean()
 	m_pGrid.resize(0);
 	m_pGrid.shrink_to_fit();
 
-	for (auto mine : m_mines)
+	for (auto wall : m_walls)
 	{
-		delete mine;
-		mine = nullptr;
+		delete wall;
+		wall = nullptr;
 	}
-	m_mines.clear();
-	m_mines.resize(0);
-	m_mines.shrink_to_fit();
+	m_walls.clear();
+	m_walls.resize(0);
+	m_walls.shrink_to_fit();
+
+	for (auto enemy : m_vEnemies)
+	{
+		delete enemy;
+		enemy = nullptr;
+	}
+	m_vEnemies.clear();
+	m_vEnemies.resize(0);
+	m_vEnemies.shrink_to_fit();
+
+	for (auto hazard : m_vHazards)
+	{
+		delete hazard;
+		hazard = nullptr;
+	}
+	m_vHazards.clear();
+	m_vHazards.resize(0);
+	m_vHazards.shrink_to_fit();
 
 	m_openList.clear();
 	m_openList.resize(0);
@@ -671,6 +853,22 @@ void PlayScene::handleEvents()
 		case SDL_TEXTINPUT:
 			io.AddInputCharactersUTF8(event.text.text);
 			break;
+		case SDL_MOUSEBUTTONDOWN:
+			if (event.button.button == 1) {
+				mouseRight = true;
+			}
+			if (event.button.button == 3) {
+				mouseLeft = true;
+			}
+			break;
+		case SDL_MOUSEBUTTONUP:
+			if (event.button.button == 1) {
+				mouseRight = false;
+			}
+			if (event.button.button == 3) {
+				mouseLeft = false;
+			}
+			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym)
 			{
@@ -680,43 +878,30 @@ void PlayScene::handleEvents()
 			case SDLK_1:
 				TheGame::Instance()->changeSceneState(SceneState::START_SCENE);
 				break;
-			case SDLK_2:
+			/*case SDLK_2:
 				TheGame::Instance()->changeSceneState(SceneState::END_SCENE);
-				break;
+				break;*/
 			case SDLK_BACKQUOTE:
 				m_displayUI = (m_displayUI) ? false : true;
 				break;
-			case SDLK_f:
-				m_findShortestPath(m_pShip->getTile());
-				break;
-			case SDLK_e:
-				m_spawnMines();
-				break;
-			case SDLK_m:
-				m_spawnShip();
-				break;
 			case SDLK_p:
-				m_spawnPlanet();
-				break;
-			case SDLK_r:
 				m_resetAll();
 				break;
 
 				/************************************************************************/
 			case SDLK_w:
-				
+				m_pPlayer->setVelocity(m_pPlayer->getVelocity() - glm::vec2(0.0f, 1.0f));
 				break;
 			case SDLK_s:
-				
+				m_pPlayer->setVelocity(m_pPlayer->getVelocity() + glm::vec2(0.0f, 1.0f));
 				break;
 			case SDLK_a:
-				
+				m_pPlayer->setVelocity(m_pPlayer->getVelocity() - glm::vec2(1.0f, 0.0f));
 				break;
 			case SDLK_d:
-				
+				m_pPlayer->setVelocity(m_pPlayer->getVelocity() + glm::vec2(1.0f, 0.0f));
 				break;
 			default:
-				
 				break;
 			}
 			{
@@ -733,18 +918,16 @@ void PlayScene::handleEvents()
 			switch (event.key.keysym.sym)
 			{
 			case SDLK_w:
-				
+				m_pPlayer->setVelocity(glm::vec2(m_pPlayer->getVelocity().x, 0));
 				break;
-
 			case SDLK_s:
-				
+				m_pPlayer->setVelocity(glm::vec2(m_pPlayer->getVelocity().x, 0));
 				break;
-
 			case SDLK_a:
-				
+				m_pPlayer->setVelocity(glm::vec2(0, m_pPlayer->getVelocity().y));
 				break;
 			case SDLK_d:
-				
+				m_pPlayer->setVelocity(glm::vec2(0, m_pPlayer->getVelocity().y));
 				break;
 			default:
 				

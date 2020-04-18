@@ -5,13 +5,14 @@
 
 class Config {
 public:
-	static const int SCREEN_WIDTH = 800;
-	static const int SCREEN_HEIGHT = 600;
-	static const int ROW_NUM = 15;
-	static const int COL_NUM = 20;
-	static const int TILE_SIZE = 40;
+	static const int SCREEN_WIDTH = 1024;
+	static const int SCREEN_HEIGHT = 768;
+	static const int ROW_NUM = 24;
+	static const int COL_NUM = 32;
+	static const int TILE_SIZE = 32;
 	static const int TILE_COST = 1;
-	static const int MINE_NUM = 50;
+	static const int WALL_NUM = 30;
+	static const int MOVE_SPEED = 5;
 
 	// Define Custom Deleters for shared_ptr types
 	static void SDL_DelRes(SDL_Window* r) { SDL_DestroyWindow(r); }

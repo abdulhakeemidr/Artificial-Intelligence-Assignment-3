@@ -37,11 +37,10 @@ public:
 
 	// setters for common variables
 	void setPosition(glm::vec2 new_position);
-	void setPosition(float x, float y);
+	void setRotation(glm::vec2 new_rotation) { m_rotation = new_rotation; }
 	void setWidth(int new_width);
 	void setHeight(int new_height);
 	void setVelocity(glm::vec2 new_velocity);
-	void setVelocity(float x, float y);
 	void setIsColliding(bool collision);
 	void setType(GameObjectType new_type);
 	void setState(SteeringState new_state);

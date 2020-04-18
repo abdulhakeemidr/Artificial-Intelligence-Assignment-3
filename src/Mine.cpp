@@ -3,10 +3,10 @@
 
 Mine::Mine()
 {
-	TheTextureManager::Instance()->load("../Assets/textures/mine.png",
-		"mine", TheGame::Instance()->getRenderer());
+	TheTextureManager::Instance()->load("../Assets/textures/tree.png",
+		"tree", TheGame::Instance()->getRenderer());
 
-	const auto size = TheTextureManager::Instance()->getTextureSize("mine");
+	const auto size = TheTextureManager::Instance()->getTextureSize("tree");
 	setWidth(size.x);
 	setHeight(size.y);
 	setPosition(glm::vec2(0.0f, 0.0f));
@@ -22,7 +22,7 @@ void Mine::draw()
 	const int xComponent = getPosition().x;
 	const int yComponent = getPosition().y;
 
-	TheTextureManager::Instance()->draw("mine", xComponent, yComponent,
+	TheTextureManager::Instance()->draw("tree", xComponent, yComponent,
 		TheGame::Instance()->getRenderer(), 0, 255, true);
 }
 

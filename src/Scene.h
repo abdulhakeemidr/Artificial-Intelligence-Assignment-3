@@ -24,9 +24,6 @@ public:
 	void removeAllChildren();
 	int numberOfChildren() const;
 
-	void updateDisplayList();
-	void drawDisplayList();
-
 private:
 	std::vector<DisplayObject*> m_displayList;
 };

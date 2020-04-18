@@ -4,13 +4,13 @@
 
 #include "Scene.h"
 #include "Label.h"
-#include "ship.h"
+//#include "ship.h"
 
 class StartScene final : public Scene
 {
 public:
 	StartScene();
-	~StartScene();
+	~StartScene() {}
 
 	// Inherited via Scene
 	virtual void draw() override;
@@ -20,11 +20,10 @@ public:
 	virtual void start() override;
 
 private:
-	Label* m_pStartLabel{};
-	Label* m_pInstructionsLabel{};
+	//Label* m_pStartLabel{};
+	//Label* m_pInstructionsLabel{};
 
-	Ship* m_pShip{};
-
+	//Ship* m_pShip{};
 };
 
 #endif /* defined (__START_SCENE__) */
